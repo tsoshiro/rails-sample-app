@@ -18,10 +18,11 @@ class UsersEditTest < ActionDispatch::IntegrationTest
     assert_select 'div.alert', "The form contains 4 errors."
   end
   
-  test "successful edit" do
-    log_in_as(@user)
-    get edit_user_path(@user)
-    assert_template 'users/edit'
+  test "successful edit with friendly forwarding" do
+    get edit_user_path(@user) # loginしてないのでリダイレクトされる
+    log_in_as(@user) # ログインする
+    assert_redirected_to edit_user_url(@user) # 目的としていたeditページにリダイレクト 
+    assert_nil session[:forwarding_url]
     name = "Foo Bar"
     email = "foo@bar.com"
     patch user_path(@user), params: { user: { name:  name,
