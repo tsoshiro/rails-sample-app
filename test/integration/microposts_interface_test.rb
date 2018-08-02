@@ -11,41 +11,34 @@ class MicropostsInterfaceTest < ActionDispatch::IntegrationTest
     log_in_as(@user)
     
     # pagination
-    get root_url
-    assert_template 'static_pages/home'
-    assert_select 'div.pagination', count: 1
-    first_page_of_microposts = @user.feed.paginate(page: 1)
-    first_page_of_microposts.each do |micropost|
-      assert_select 'a[href=?]', user_path(@user), text: @user.name
-      assert_select 'a[href=?]', micropost_path(micropost), text: 'delete'
-    end
-    
+    get root_path
+    assert_select 'div.pagination'
+
     # invalid submission
     assert_no_difference 'Micropost.count' do
       post microposts_path, params: { micropost: { content: 'a' * 141 } }
     end
-    # assert_not flash.empty?
-    assert_template 'static_pages/home'
     assert_select 'div#error_explanation'
     
     # valid submission
+    content = "This micropost really ties the room together"
     assert_difference 'Micropost.count', 1 do
-      post microposts_path, params: { micropost: { content: "asume post" } }
+      post microposts_path, params: { micropost: { content: content } }
     end
-    assert_not flash.empty?
     assert_redirected_to root_url
+    follow_redirect!
+    assert_match content, response.body
     
     # delete micropost
-     assert_difference 'Micropost.count', -1 do
-      delete micropost_path(@user.microposts.first)
+    assert_select 'a', text: 'delete'
+    first_micropost = @user.microposts.paginate(page: 1).first
+    assert_difference 'Micropost.count', -1 do
+      delete micropost_path(first_micropost)
     end
-    assert_not flash.empty?
-    assert_redirected_to root_url
-    
+
     # check other user's profile
     @other = users(:archer)
     get user_path(@other)
-    assert_template 'users/show'
-    assert_select  'a[href=?]', user_path(@other), text: 'delete', count: 0
+    assert_select  'a', text: 'delete', count: 0
   end
 end
