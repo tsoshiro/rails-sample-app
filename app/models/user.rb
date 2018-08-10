@@ -76,11 +76,13 @@ class User < ApplicationRecord
     reset_sent_at < 2.hours.ago
   end
   
-  # Defines a proto-feed.
-  # See "Following users" for the full implemention.
+  # Returns a user's status feed.
   def feed
-    # Micropost.where("user_id=?", id)
-    microposts
+    # Micropost.where("user_id IN (?) OR user_id = ?", following_ids, id)
+    # Micropost.where("user_id IN (?)", following_ids) # Exercise.1
+    # Micropost.where("user_id = ?", id) # Exercise.2
+    # Micropost.where("user_id IN (?) OR user_id NOT IN (?) OR user_id = ?", following_ids, following_ids, id) # Exercise.3
+    Micropost.all
   end
   
   # Follows a user.
